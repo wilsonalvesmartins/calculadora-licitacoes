@@ -7,8 +7,8 @@ services:
       dockerfile: Dockerfile
     container_name: calculadora_licitacoes
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+    expose:
+      - 8000
     environment:
       - PORT=8000
       - DATABASE_PATH=/app/data/licitacoes.db
