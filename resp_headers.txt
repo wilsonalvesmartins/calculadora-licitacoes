@@ -1,9 +1,0 @@
-HTTP/1.1 419 status code 419
-Alt-Svc: h3=":443"; ma=2592000
-Cache-Control: no-cache, private
-Content-Type: text/html; charset=utf-8
-Date: Wed, 28 Oct 2026 17:15:38 GMT
-Server: nginx
-Set-Cookie: coolify_session=eyJpdiI6IlQwUDczOXZBSjNpcm9VTFpwcWt2Nnc9PSIsInZhbHVlIjoicjN4bDdnV3JqQ0MwT0pyWkowa2J0R0VZSW5DTmN5Y0E1RjNqYUJhRVBQVU9wUEpONE42Tk5Jc0poU3ppSkJKd2xRWlNCZDczN01BbGpQeDNlSkw4WVVlbEE0K01hUkJpSWJtbGNtOWwwbm5SNWc1QXZUVTZvOE9EcFg2RitTMUMiLCJtYWMiOiJjMmNkN2UwM2I3M2YxYzRkMWM1ZDA1NThmMDIxMTZlN2ExZWQ2YTIxOTg2ZTY4ZDBiNzJjNTQ2YjExZTdiYzAwIiwidGFnIjoiIn0%3D; expires=Wed, 04 Nov 2026 17:15:38 GMT; Max-Age=604800; path=/; secure; httponly; samesite=lax
-Transfer-Encoding: chunked
-
