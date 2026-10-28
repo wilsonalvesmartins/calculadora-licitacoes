@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Calculadora de Licitações</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <!-- Header Card -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-lg shadow-emerald-500/30 mb-4">
+        <i class="fa-solid fa-scale-balanced text-3xl"></i>
+      </div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Calculadora de Licitações</h1>
+      <p class="text-slate-400 text-sm mt-1">Gestão de Lucros, Custos e Impostos em Certames</p>
+    </div>
+
+    <!-- Login Box -->
+    <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
+      <h2 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+        <i class="fa-solid fa-lock text-emerald-400 text-sm"></i>
+        <span>Acessar o Sistema</span>
+      </h2>
+
+      <div id="errorAlert" class="hidden mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-start gap-3">
+        <i class="fa-solid fa-circle-exclamation mt-0.5 text-rose-400"></i>
+        <span id="errorMessage">Credenciais inválidas.</span>
+      </div>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label for="email" class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1.5">
+            E-mail
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-regular fa-envelope"></i>
+            </div>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              value="wilsonalves.jur@gmail.com" 
+              required
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm transition"
+              placeholder="seu.email@exemplo.com"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label for="password" class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1.5">
+            Senha
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-key"></i>
+            </div>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              value="93281434@Neto@" 
+              required
+              class="w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm transition"
+              placeholder="••••••••••••"
+            >
+            <button 
+              type="button" 
+              id="togglePassword" 
+              class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 transition"
+              title="Mostrar/Ocultar Senha"
+            >
+              <i class="fa-regular fa-eye" id="togglePasswordIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs pt-1">
+          <label class="flex items-center gap-2 text-slate-400 hover:text-slate-300 cursor-pointer">
+            <input type="checkbox" id="rememberMe" checked class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-emerald-500">
+            <span>Manter conectado</span>
+          </label>
+        </div>
+
+        <button 
+          type="submit" 
+          id="submitBtn"
+          class="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition transform active:scale-[0.99] cursor-pointer"
+        >
+          <span id="btnText">Entrar no Sistema</span>
+          <i class="fa-solid fa-arrow-right text-sm" id="btnIcon"></i>
+        </button>
+      </form>
+
+      <div class="mt-6 pt-5 border-t border-slate-700/60 text-center text-xs text-slate-400">
+        <p>Configuração VPS Coolify &middot; Docker Compose Pronto</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mostrar/ocultar senha
+    const toggleBtn = document.getElementById('togglePassword');
+    const pwdInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('togglePasswordIcon');
+
+    toggleBtn.addEventListener('click', () => {
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        pwdInput.type = 'password';
+        toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    });
+
+    // Submissão do login
+    const form = document.getElementById('loginForm');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnIcon = document.getElementById('btnIcon');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.classList.add('hidden');
+      
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      btnText.textContent = "Verificando...";
+      btnIcon.className = "fa-solid fa-circle-notch fa-spin text-sm";
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('auth_token', data.access_token);
+          localStorage.setItem('auth_user', JSON.stringify(data.user));
+          window.location.href = '/';
+        } else {
+          errorMessage.textContent = data.detail || 'Falha no login. Verifique seus dados.';
+          errorAlert.classList.remove('hidden');
+        }
+      } catch (err) {
+        errorMessage.textContent = 'Erro de conexão com o servidor.';
+        errorAlert.classList.remove('hidden');
+      } finally {
+        btnText.textContent = "Entrar no Sistema";
+        btnIcon.className = "fa-solid fa-arrow-right text-sm";
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

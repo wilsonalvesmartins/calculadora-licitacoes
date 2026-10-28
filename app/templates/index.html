@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Licitações & Dispensas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+  
+  <!-- Navbar -->
+  <header class="bg-slate-800/90 border-b border-slate-700/80 sticky top-0 z-30 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid fa-scale-balanced text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base sm:text-lg text-white leading-tight">Calculadora de Licitações</h1>
+          <span class="text-[11px] text-slate-400 font-medium">Margens, Custos & Faturamento Governamental</span>
+        </div>
+      </div>
+
+      <!-- User & Main CTA -->
+      <div class="flex items-center gap-3">
+        <button 
+          id="newCertameBtn" 
+          class="py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/25 transition transform active:scale-95 cursor-pointer"
+        >
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Novo Cálculo</span>
+        </button>
+
+        <div class="h-6 w-px bg-slate-700 mx-1 hidden sm:block"></div>
+
+        <div class="hidden md:flex flex-col text-right">
+          <span class="text-xs font-semibold text-slate-200">{{ user.email }}</span>
+          <span class="text-[10px] text-emerald-400">Usuário Autenticado</span>
+        </div>
+
+        <button 
+          id="logoutBtn" 
+          class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 transition" 
+          title="Sair do Sistema"
+        >
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    
+    <!-- Top KPI Dashboard Summary -->
+    <section class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+      
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-1">
+          <span class="text-xs font-medium uppercase tracking-wider">Total Certames</span>
+          <i class="fa-solid fa-folder-open text-slate-500 text-sm"></i>
+        </div>
+        <p id="statTotalCertames" class="text-2xl font-bold text-white">0</p>
+        <span class="text-[11px] text-slate-400">Histórico de cálculos</span>
+      </div>
+
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-1">
+          <span class="text-xs font-medium uppercase tracking-wider">Homologados</span>
+          <i class="fa-solid fa-trophy text-amber-400 text-sm"></i>
+        </div>
+        <p id="statGanhos" class="text-2xl font-bold text-amber-400">0</p>
+        <span class="text-[11px] text-slate-400">Certames vencidos</span>
+      </div>
+
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow-sm col-span-2 sm:col-span-1">
+        <div class="flex items-center justify-between text-slate-400 mb-1">
+          <span class="text-xs font-medium uppercase tracking-wider">Faturamento Ganho</span>
+          <i class="fa-solid fa-money-bill-trend-up text-teal-400 text-sm"></i>
+        </div>
+        <p id="statFaturamento" class="text-2xl font-bold text-teal-300">R$ 0,00</p>
+        <span class="text-[11px] text-slate-400">Total vendido</span>
+      </div>
+
+      <div class="bg-slate-800/80 border border-emerald-500/30 rounded-2xl p-4 shadow-sm badge-profit">
+        <div class="flex items-center justify-between text-slate-400 mb-1">
+          <span class="text-xs font-medium uppercase tracking-wider text-emerald-400">Lucro Real</span>
+          <i class="fa-solid fa-wallet text-emerald-400 text-sm"></i>
+        </div>
+        <p id="statLucro" class="text-2xl font-bold text-emerald-400">R$ 0,00</p>
+        <span class="text-[11px] text-slate-400">Líquido no bolso</span>
+      </div>
+
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-1">
+          <span class="text-xs font-medium uppercase tracking-wider">Margem Média</span>
+          <i class="fa-solid fa-chart-pie text-emerald-400 text-sm"></i>
+        </div>
+        <p id="statMargem" class="text-2xl font-bold text-white">0,00%</p>
+        <span class="text-[11px] text-slate-400">Lucro s/ Venda</span>
+      </div>
+
+    </section>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-4 mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+      
+      <!-- Status Tabs -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+        <button class="filter-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white transition whitespace-nowrap" data-status="TODOS">
+          Todos
+        </button>
+        <button class="filter-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition whitespace-nowrap" data-status="Em Elaboração">
+          Em Elaboração
+        </button>
+        <button class="filter-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition whitespace-nowrap" data-status="Em Disputa">
+          Em Disputa
+        </button>
+        <button class="filter-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition whitespace-nowrap" data-status="Ganho / Homologado">
+          Ganhos
+        </button>
+        <button class="filter-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition whitespace-nowrap" data-status="Perdido">
+          Perdidos
+        </button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative w-full md:w-80">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+          <i class="fa-solid fa-magnifying-glass text-xs"></i>
+        </div>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Buscar prefeitura, pregão ou objeto..." 
+          class="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+        >
+      </div>
+
+    </div>
+
+    <!-- Certames List Section -->
+    <section>
+      <div id="certamesListContainer" class="space-y-4">
+        <!-- Itens inseridos dinamicamente pelo JavaScript -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden text-center py-16 px-4 bg-slate-800/40 border border-slate-700/60 rounded-3xl">
+        <div class="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto text-slate-500 mb-4 text-2xl">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+        </div>
+        <h3 class="text-base font-semibold text-white">Nenhum cálculo encontrado</h3>
+        <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+          Comece inserindo uma prefeitura ou órgão público, o número do pregão e os itens cotados para calcular seu lucro em tempo real.
+        </p>
+        <button 
+          id="emptyNewBtn" 
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/25 transition"
+        >
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Criar Primeiro Cálculo</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL / WORKSPACE DE NOVO / EDITAR CERTAME ================= -->
+  <div id="certameModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 md:p-6">
+    <div class="bg-slate-850 border border-slate-700 rounded-2xl w-full max-w-6xl shadow-2xl overflow-hidden my-4 sm:my-8 modal-animate flex flex-col max-h-[92vh]">
+      
+      <!-- Modal Header -->
+      <div class="bg-slate-800 px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+            <i class="fa-solid fa-calculator text-base"></i>
+          </div>
+          <div>
+            <h3 id="modalTitle" class="text-base sm:text-lg font-bold text-white">Novo Cálculo de Licitação / Dispensa</h3>
+            <p class="text-[11px] text-slate-400">Preencha os dados do certame e adicione os itens para cálculo automático</p>
+          </div>
+        </div>
+        <button id="closeModalBtn" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-700 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable Form) -->
+      <div class="p-6 overflow-y-auto flex-1 space-y-6">
+        <form id="certameForm" class="space-y-6">
+          <input type="hidden" id="certameId" value="">
+
+          <!-- Bloco 1: Dados do Certame -->
+          <div class="bg-slate-900/60 p-4 sm:p-5 rounded-xl border border-slate-700/60 space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+              <i class="fa-solid fa-landmark text-xs"></i>
+              <span>1. Informações do Órgão e Pregão</span>
+            </h4>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Prefeitura / Órgão -->
+              <div>
+                <label for="orgao" class="block text-xs font-medium text-slate-300 uppercase mb-1">
+                  Prefeitura / Órgão Público *
+                </label>
+                <input 
+                  type="text" 
+                  id="orgao" 
+                  required
+                  placeholder="Ex: Prefeitura Municipal de Salvador" 
+                  class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+              </div>
+
+              <!-- Número do Pregão / Dispensa -->
+              <div>
+                <label for="numeroPregao" class="block text-xs font-medium text-slate-300 uppercase mb-1">
+                  Nº do Pregão / Dispensa *
+                </label>
+                <input 
+                  type="text" 
+                  id="numeroPregao" 
+                  required
+                  placeholder="Ex: Pregão Eletrônico 24/2026" 
+                  class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+              </div>
+
+              <!-- Modalidade -->
+              <div>
+                <label for="modalidade" class="block text-xs font-medium text-slate-300 uppercase mb-1">
+                  Modalidade
+                </label>
+                <select 
+                  id="modalidade" 
+                  class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="Pregão Eletrônico">Pregão Eletrônico</option>
+                  <option value="Dispensa de Licitação">Dispensa de Licitação</option>
+                  <option value="Pregão Presencial">Pregão Presencial</option>
+                  <option value="Concorrência">Concorrência</option>
+                  <option value="Inexigibilidade">Inexigibilidade</option>
+                  <option value="Tomada de Preços">Tomada de Preços</option>
+                  <option value="Cotação Eletrônica">Cotação Eletrônica</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Título / Objeto -->
+            <div>
+              <label for="titulo" class="block text-xs font-medium text-slate-300 uppercase mb-1">
+                Título / Objeto do Pregão (Do que se trata) *
+              </label>
+              <input 
+                type="text" 
+                id="titulo" 
+                required
+                placeholder="Ex: Aquisição de material permanente, computadores e nobreaks para secretarias" 
+                class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Data do Pregão -->
+              <div>
+                <label for="dataAbertura" class="block text-xs font-medium text-slate-300 uppercase mb-1">
+                  Data de Abertura / Disputa
+                </label>
+                <input 
+                  type="date" 
+                  id="dataAbertura" 
+                  class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+              </div>
+
+              <!-- Status -->
+              <div>
+                <label for="status" class="block text-xs font-medium text-slate-300 uppercase mb-1">
+                  Status Atual
+                </label>
+                <select 
+                  id="status" 
+                  class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="Em Elaboração">Em Elaboração</option>
+                  <option value="Em Disputa">Em Disputa</option>
+                  <option value="Ganho / Homologado">Ganho / Homologado</option>
+                  <option value="Perdido">Perdido</option>
+                  <option value="Arquivado">Arquivado</option>
+                </select>
+              </div>
+
+              <!-- Alíquota Padrão com Ação Rápida -->
+              <div>
+                <label for="aliquotaPadrao" class="block text-xs font-medium text-slate-300 uppercase mb-1 flex items-center justify-between">
+                  <span>% Alíquota Padrão Imposto</span>
+                  <button type="button" id="applyTaxBtn" class="text-[10px] text-teal-400 hover:underline">
+                    Aplicar a todos
+                  </button>
+                </label>
+                <div class="relative">
+                  <input 
+                    type="number" 
+                    step="0.1" 
+                    id="aliquotaPadrao" 
+                    value="6.0" 
+                    class="w-full px-3.5 py-2 pr-7 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                  <span class="absolute right-3 top-2 text-xs text-slate-400">%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Observações do Edital -->
+            <div>
+              <label for="observacoes" class="block text-xs font-medium text-slate-300 uppercase mb-1">
+                Observações do Edital / Exigências Técnicas / Prazos
+              </label>
+              <textarea 
+                id="observacoes" 
+                rows="2" 
+                placeholder="Ex: Entrega em até 15 dias corridos; exige atestado de capacidade técnica; garantia de 12 meses..." 
+                class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Bloco 2: Itens do Certame -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                  <i class="fa-solid fa-list-check text-xs"></i>
+                  <span>2. Itens, Custos, Impostos & Lances</span>
+                </h4>
+                <p class="text-[11px] text-slate-400">Insira custo, % de imposto e lance de venda. O sistema calcula o lucro e valores a receber ao vivo.</p>
+              </div>
+              <button 
+                type="button" 
+                id="addItemBtn" 
+                class="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium flex items-center gap-1.5 transition"
+              >
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Adicionar Item</span>
+              </button>
+            </div>
+
+            <!-- Container da Tabela com Scroll Horizontal -->
+            <div id="itemsTableContainer" class="overflow-x-auto border border-slate-700 rounded-xl bg-slate-900/80 max-h-[380px] overflow-y-auto">
+              <table class="w-full text-left text-xs whitespace-nowrap">
+                <thead class="bg-slate-800/90 text-slate-400 font-semibold uppercase text-[11px] sticky top-0 z-10 border-b border-slate-700">
+                  <tr>
+                    <th class="py-2.5 px-2 text-center w-14">#</th>
+                    <th class="py-2.5 px-2 min-w-[240px]">Descrição / Objeto do Item</th>
+                    <th class="py-2.5 px-2 text-center w-28">Und / Qtd</th>
+                    <th class="py-2.5 px-2 text-right w-32">Custo Compra</th>
+                    <th class="py-2.5 px-2 text-center w-20">% Imp.</th>
+                    <th class="py-2.5 px-2 text-right w-28 bg-amber-500/10 text-amber-300 font-bold border-x border-amber-500/20" title="Preço de venda mínimo para margem zero">
+                      Lance Mínimo
+                    </th>
+                    <th class="py-2.5 px-2 text-right w-32 font-bold text-emerald-400">
+                      Lance Venda
+                    </th>
+                    <th class="py-2.5 px-2 text-right w-36">Resultado / Margem</th>
+                    <th class="py-2.5 px-2 text-center w-16">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTableBody" class="divide-y divide-slate-800">
+                  <!-- Linhas renderizadas dinamicamente via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal Footer & Resumo Financeiro Fixo -->
+      <div class="bg-slate-800 border-t border-slate-700 p-4 sm:p-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+        
+        <!-- Totais Resumidos -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase">Itens</span>
+            <span id="modalTotalItens" class="font-bold text-white">0 un</span>
+          </div>
+
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase">Custos Totais</span>
+            <span id="modalTotalCustos" class="font-bold text-slate-300">R$ 0,00</span>
+          </div>
+
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase">Impostos Totais</span>
+            <span id="modalTotalImpostos" class="font-bold text-amber-400">R$ 0,00</span>
+          </div>
+
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase">Total Vendido</span>
+            <span id="modalTotalFaturamento" class="font-bold text-white">R$ 0,00</span>
+          </div>
+
+          <div>
+            <span class="text-teal-400 block text-[10px] uppercase font-bold">Líquido a Receber</span>
+            <span id="modalTotalReceber" class="font-bold text-teal-300">R$ 0,00</span>
+          </div>
+        </div>
+
+        <!-- Lucro e Ações de Salvar -->
+        <div class="flex items-center justify-between lg:justify-end gap-4 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-700">
+          <div class="text-right">
+            <span class="text-[10px] uppercase font-bold text-slate-400 block">Lucro Líquido Real</span>
+            <div class="flex items-baseline gap-1.5">
+              <span id="modalTotalLucro" class="text-xl font-black text-emerald-400">R$ 0,00</span>
+              <span id="modalTotalMargem" class="text-xs font-semibold text-emerald-400">Margem: 0,00%</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              id="cancelModalBtn" 
+              class="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium transition cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              form="certameForm" 
+              id="saveCertameBtn" 
+              class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-xs shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition cursor-pointer"
+            >
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Salvar Cálculo</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 transition-all transform translate-y-8 opacity-0 pointer-events-none bg-slate-800 border border-slate-700 text-white">
+    <i id="toastIcon" class="fa-solid fa-info-circle text-lg"></i>
+    <span id="toastMessage" class="text-xs font-medium">Notificação</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

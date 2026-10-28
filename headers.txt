@@ -1,0 +1,13 @@
+HTTP/1.1 302 Found
+Alt-Svc: h3=":443"; ma=2592000
+Cache-Control: no-cache, private
+Content-Type: text/html; charset=utf-8
+Date: Wed, 28 Oct 2026 17:11:05 GMT
+Location: https://coolify.cajuru.cloud
+Server: nginx
+Set-Cookie: XSRF-TOKEN=eyJpdiI6ImhjT2M3RVJhQUpMait0K0VtRExkc3c9PSIsInZhbHVlIjoiQTJpUUsvaVQ3bW1pZmFld3VveFdGV3Q4WnRDTzhnZDZiTk9ZOG9UY21na0RoMTNDK0lYdXYySlJlRzU5ZDQxME1ubEpkbHRwdkE0QnlSUGNHSDZlTUFuV3dYS1JzTCtoUUczUmlTNFB3bXdLa05LcVFqOWJ1d1lDdU50eXV2MnoiLCJtYWMiOiIzNDA4OThjNzI2OGNlZTBkZjVhNmUyN2Q4N2Q5YjJmZjE5ODlhMGM0MDUxOGQxMDYxYzcyNzJlMDFmNWQyY2VkIiwidGFnIjoiIn0%3D; expires=Wed, 04 Nov 2026 17:11:05 GMT; Max-Age=604800; path=/; secure; samesite=lax
+Set-Cookie: coolify_session=eyJpdiI6IjFSS1NaM0RTT0N3ck5XMDFGV0RhT2c9PSIsInZhbHVlIjoidkNwQ3UvRTBFalZrYjRsa1VVeVZxSm5vSzlkMTMrRHdVT0hZYkpEaWdwaFRGTUpqeExxenJtUWVCelJPTk9nOTAwUWhFOUJ3N1MrMGIxR3BPTDJtV3RiaDlNWkdCTlo2aXZTK1l3b1dvWmY5dHFCbEdpdy93ckhSd3FmWkVXTGEiLCJtYWMiOiJlMjViNjA2YzVmOGVlYWZmNTQ1Yzk5ZDk0OTI4ODA4YTk2ZmRlNmM4OWEyN2U1MTRiMTQwMzYxNTRlZjY5ZjJlIiwidGFnIjoiIn0%3D; expires=Wed, 04 Nov 2026 17:11:05 GMT; Max-Age=604800; path=/; secure; httponly; samesite=lax
+X-Ratelimit-Limit: 5
+X-Ratelimit-Remaining: 4
+Transfer-Encoding: chunked
+

@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  calculadora-licitacoes:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: calculadora_licitacoes
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - DATABASE_PATH=/app/data/licitacoes.db
+      - SECRET_KEY=${SECRET_KEY:-licitacoes_secret_key_super_segura_2026_prod}
+      - DEFAULT_USER_EMAIL=${DEFAULT_USER_EMAIL:-wilsonalves.jur@gmail.com}
+      - DEFAULT_USER_PASSWORD=${DEFAULT_USER_PASSWORD:-93281434@Neto@}
+    volumes:
+      - licitacoes_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  licitacoes_data:
+    driver: local

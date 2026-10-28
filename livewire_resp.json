@@ -1,0 +1,401 @@
+﻿<!DOCTYPE html>
+<html data-theme="dark" lang="en">
+<script data-navigate-once>
+    // Immediate theme application - runs before any rendering
+    (function () {
+        // The OS color picker only speaks hex. Convert it once so the whole theme
+        // cascade is authored in OKLCH (sRGB -> linear -> OKLab -> OKLCH).
+        const srgbToLinear = (c) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+        window.hexToOklch = (hex) => {
+            const [r, g, b] = hex.match(/[a-f\d]{2}/gi).map((channel) => srgbToLinear(parseInt(channel, 16) / 255));
+            const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+            const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+            const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+            const okL = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+            const okA = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+            const okB = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+            const chroma = Math.sqrt(okA * okA + okB * okB);
+            let hue = Math.atan2(okB, okA) * 180 / Math.PI;
+            if (hue < 0) hue += 360;
+            return `oklch(${(okL * 100).toFixed(2)}% ${chroma.toFixed(4)} ${hue.toFixed(2)})`;
+        };
+        window.themeAccentForeground = (color) => {
+            const channels = color.match(/[a-f\d]{2}/gi).map(channel => parseInt(channel, 16) * 0.85 + 255 * 0.15);
+            const luminance = channels
+                .map(channel => channel / 255)
+                .map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+                .reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+
+            return luminance > 0.179 ? 'oklch(0% 0 0)' : 'oklch(100% 0 0)';
+        };
+        window.applyStoredTheme = () => {
+            const theme = localStorage.theme === 'purple' ? 'custom' : (localStorage.theme || 'dark');
+            const themeColor = localStorage.themeColor || '#6b16ed';
+            const customMode = localStorage.customMode || 'dark';
+            document.documentElement.dataset.navStyle = localStorage.navStyle === 'floating' ? 'floating' : 'default';
+            document.documentElement.dataset.navItems = localStorage.navItems === 'flat' ? 'flat' : '3d';
+            const isDark = theme === 'dark'
+                || (theme === 'custom' && customMode === 'dark')
+                || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+
+            localStorage.theme = theme;
+            document.documentElement.classList.toggle('dark', isDark);
+            document.documentElement.dataset.theme = theme === 'custom' ? 'custom' : (isDark ? 'dark' : 'light');
+            document.documentElement.style.setProperty('--theme-base-color', window.hexToOklch(themeColor));
+            document.documentElement.style.setProperty('--theme-accent-foreground', window.themeAccentForeground(themeColor));
+            document.querySelector('meta[name=theme-color]')?.setAttribute('content', isDark ? '#101010' : '#ffffff');
+        };
+        // Single source for the theme controls Alpine state, shared by the
+        // Appearance page and the profile dropdown via x-data="themeControls()".
+        window.themeControls = () => ({
+            theme: localStorage.getItem('theme') === 'purple' ? 'custom' : (localStorage.getItem('theme') || 'dark'),
+            themeColor: localStorage.getItem('themeColor') || '#6b16ed',
+            customMode: localStorage.getItem('customMode') || 'dark',
+            pageWidth: localStorage.getItem('pageWidth') || 'centered',
+            navStyle: localStorage.getItem('navStyle') === 'floating' ? 'floating' : 'default',
+            navItems: localStorage.getItem('navItems') === 'flat' ? 'flat' : '3d',
+            themeColorFrame: null,
+            pickerOpen: false,
+            init() {
+                localStorage.setItem('theme', this.theme);
+                this.applyTheme();
+            },
+            chooseCustom() {
+                this.setTheme('custom');
+                this.pickerOpen = !this.pickerOpen;
+            },
+            setTheme(type) {
+                this.theme = type;
+                localStorage.setItem('theme', type);
+                this.applyTheme();
+            },
+            setCustomMode(mode) {
+                this.customMode = mode;
+                localStorage.setItem('customMode', mode);
+                if (this.theme !== 'custom') {
+                    this.setTheme('custom');
+                    return;
+                }
+                this.applyTheme();
+            },
+            setWidth(width) {
+                this.pageWidth = width;
+                localStorage.setItem('pageWidth', width);
+                window.dispatchEvent(new CustomEvent('page-width-changed', { detail: width }));
+            },
+            setNavStyle(style) {
+                this.navStyle = style;
+                localStorage.setItem('navStyle', style);
+                document.documentElement.dataset.navStyle = style;
+            },
+            setNavItems(style) {
+                this.navItems = style;
+                localStorage.setItem('navItems', style);
+                document.documentElement.dataset.navItems = style;
+            },
+            previewThemeColor(color) {
+                this.themeColor = color;
+                if (this.theme !== 'custom') {
+                    this.theme = 'custom';
+                    localStorage.setItem('theme', 'custom');
+                }
+                document.documentElement.dataset.theme = 'custom';
+                document.documentElement.classList.toggle('dark', this.customMode === 'dark');
+                if (this.themeColorFrame) {
+                    return;
+                }
+                this.themeColorFrame = requestAnimationFrame(() => {
+                    document.documentElement.style.setProperty('--theme-base-color', window.hexToOklch(this.themeColor));
+                    document.documentElement.style.setProperty('--theme-accent-foreground', window.themeAccentForeground(this.themeColor));
+                    this.themeColorFrame = null;
+                });
+            },
+            saveThemeColor(color) {
+                this.previewThemeColor(color);
+                localStorage.setItem('themeColor', color);
+                localStorage.setItem('theme', 'custom');
+            },
+            applyTheme() {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const isDark = this.theme === 'dark'
+                    || (this.theme === 'custom' && this.customMode === 'dark')
+                    || (this.theme === 'system' && prefersDark);
+                document.documentElement.classList.toggle('dark', isDark);
+                document.documentElement.dataset.theme = this.theme === 'custom' ? 'custom' : (isDark ? 'dark' : 'light');
+                document.documentElement.style.setProperty('--theme-base-color', window.hexToOklch(this.themeColor));
+                document.documentElement.style.setProperty('--theme-accent-foreground', window.themeAccentForeground(this.themeColor));
+                document.querySelector('meta[name=theme-color]')?.setAttribute('content', isDark ? '#101010' : '#ffffff');
+            },
+        });
+
+        document.addEventListener('livewire:navigated', window.applyStoredTheme);
+        window.applyStoredTheme();
+    })();
+</script>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#101010" id="theme-color-meta" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="Description" content="Coolify: An open-source & self-hostable Heroku / Netlify / Vercel alternative" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@coolifyio" />
+    <meta name="twitter:title" content="Coolify" />
+    <meta name="twitter:description" content="An open-source & self-hostable Heroku / Netlify / Vercel alternative." />
+    <meta name="twitter:image" content="https://cdn.coollabs.io/og-images/coolify.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://coolify.io" />
+    <meta property="og:title" content="Coolify" />
+    <meta property="og:description" content="An open-source & self-hostable Heroku / Netlify / Vercel alternative." />
+    <meta property="og:site_name" content="Coolify" />
+    <meta property="og:image" content="https://cdn.coollabs.io/og-images/coolify.png" />
+            <title>[Cajuru Cloud] Coolify</title>
+            <link rel="icon" href="https://coolify.cajuru.cloud/favicon.ico" sizes="32x32" />
+        <link rel="icon" href="https://coolify.cajuru.cloud/coolify-logo.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="https://coolify.cajuru.cloud/apple-touch-icon.png" />
+    <link rel="manifest" href="https://coolify.cajuru.cloud/site.webmanifest" />
+    <meta name="apple-mobile-web-app-title" content="Coolify" />
+    <meta name="csrf-token" content="tdx5ucvNeg2vGv61puX5Yu8cpILdBzOSwPy0AwyF">
+    <link rel="preload" as="style" href="https://coolify.cajuru.cloud/build/assets/app-BrP-ENHg.css" /><link rel="preload" as="style" href="https://coolify.cajuru.cloud/build/assets/app-BSYJg1Cb.css" /><link rel="modulepreload" as="script" href="https://coolify.cajuru.cloud/build/assets/app-BAo4EVRS.js" /><link rel="stylesheet" href="https://coolify.cajuru.cloud/build/assets/app-BrP-ENHg.css" data-navigate-track="reload" /><link rel="stylesheet" href="https://coolify.cajuru.cloud/build/assets/app-BSYJg1Cb.css" data-navigate-track="reload" /><script type="module" src="https://coolify.cajuru.cloud/build/assets/app-BAo4EVRS.js" data-navigate-track="reload"></script>    <script>
+        // Update theme-color meta tag (non-critical, can run async)
+        const t = localStorage.theme || 'dark';
+        const isDark = t === 'dark' || t === 'custom' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.getElementById('theme-color-meta')?.setAttribute('content', isDark ? '#101010' : '#ffffff');
+    </script>
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+                <script type="text/javascript" src="https://coolify.cajuru.cloud/js/echo.js"></script>
+        <script type="text/javascript" src="https://coolify.cajuru.cloud/js/pusher.js"></script>
+        <script type="text/javascript" src="https://coolify.cajuru.cloud/js/apexcharts.js"></script>
+        <script type="text/javascript" src="https://coolify.cajuru.cloud/js/purify.min.js"></script>
+    </head>
+    <body class="error-page-body text-black dark:text-inherit">
+        <div x-data
+    x-init="window.toast = function(message, options = {}) {
+        try {
+            window.dispatchEvent(new CustomEvent('toast-show', {
+                detail: {
+                    type: options.type ?? 'default',
+                    message,
+                    description: options.description ?? '',
+                    position: options.position ?? 'bottom-right',
+                    html: options.html ?? '',
+                    persistent: options.persistent ?? false,
+                },
+            }));
+        } catch (error) {
+            console.error('Error showing toast:', error);
+        }
+    }">
+    <template x-teleport="body">
+        <ul x-data="{
+            toasts: [],
+            position: 'bottom-right',
+            addToast(event) {
+                this.position = event.detail.position || 'bottom-right';
+
+                const toast = {
+                    id: `toast-${Math.random().toString(16).slice(2)}`,
+                    visible: false,
+                    message: event.detail.message,
+                    description: event.detail.description,
+                    type: event.detail.type,
+                    html: event.detail.html ? window.sanitizeHTML(event.detail.html) : '',
+                    timeout: null,
+                    persistent: event.detail.persistent === true,
+                    copied: false,
+                    copiedTimeout: null,
+                };
+
+                this.toasts.unshift(toast);
+                if (this.toasts.length > 4) {
+                    const index = this.toasts.findLastIndex(item => !item.persistent);
+                    if (index !== -1) {
+                        const [removed] = this.toasts.splice(index, 1);
+                        clearTimeout(removed.timeout);
+                        clearTimeout(removed.copiedTimeout);
+                    }
+                }
+
+                this.$nextTick(() => {
+                    const activeToast = this.toasts.find(item => item.id === toast.id);
+                    if (!activeToast) return;
+
+                    activeToast.visible = true;
+                    this.scheduleToast(activeToast, 4000);
+                });
+            },
+            scheduleToast(toast, delay = 2000) {
+                clearTimeout(toast.timeout);
+                if (toast.persistent) return;
+                toast.timeout = setTimeout(() => this.removeToast(toast.id), delay);
+            },
+            pauseToast(toast) {
+                clearTimeout(toast.timeout);
+            },
+            resumeToast(toast) {
+                this.scheduleToast(toast);
+            },
+            async copyToast(toast) {
+                await navigator.clipboard.writeText(toast.description);
+                toast.copied = true;
+                clearTimeout(toast.copiedTimeout);
+                toast.copiedTimeout = setTimeout(() => {
+                    toast.copied = false;
+                }, 2000);
+            },
+            removeToast(id) {
+                const toast = this.toasts.find(item => item.id === id);
+                if (!toast) return;
+
+                toast.visible = false;
+                clearTimeout(toast.timeout);
+                clearTimeout(toast.copiedTimeout);
+                setTimeout(() => {
+                    this.toasts = this.toasts.filter(item => item.id !== id);
+                }, 150);
+            },
+        }" @toast-show.window="addToast($event)"
+            class="fixed z-9999 flex w-[calc(100%-2rem)] gap-2.5 sm:max-w-[26rem]"
+            :class="{
+                'right-4 top-4 flex-col': position === 'top-right',
+                'left-4 top-4 flex-col': position === 'top-left',
+                'left-1/2 top-4 -translate-x-1/2 flex-col': position === 'top-center',
+                'right-4 bottom-4 flex-col-reverse': position === 'bottom-right',
+                'left-4 bottom-4 flex-col-reverse': position === 'bottom-left',
+                'left-1/2 bottom-4 -translate-x-1/2 flex-col-reverse': position === 'bottom-center',
+            }"
+            x-cloak>
+            <template x-for="toast in toasts" :key="toast.id">
+                <li x-show="toast.visible"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="translate-y-2 opacity-0"
+                    x-transition:enter-end="translate-y-0 opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="translate-y-0 opacity-100"
+                    x-transition:leave-end="translate-y-1 opacity-0"
+                    @mouseenter="pauseToast(toast)" @mouseleave="resumeToast(toast)"
+                    class="surface-popover toast-card relative flex w-full items-start rounded-lg group"
+                    :class="{ 'p-3.5 pr-20': !toast.html, 'p-0': toast.html }">
+                    <template x-if="!toast.html">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <div class="toast-icon flex size-8 shrink-0 items-center justify-center rounded-lg"
+                                :class="{
+                                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400': toast.type === 'success',
+                                    'bg-coollabs/10 text-coollabs dark:bg-brand/15 dark:text-brand-light': toast.type === 'info',
+                                    'bg-amber-100 text-amber-700 dark:bg-warning/10 dark:text-warning': toast.type === 'warning',
+                                    'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400': toast.type === 'danger',
+                                    'bg-neutral-100 text-neutral-600 dark:bg-white/[0.06] dark:text-fg-dim': toast.type === 'default',
+                                }">
+                                <svg class="size-4" x-show="toast.type === 'success'" viewBox="0 0 24 24" fill="none"
+    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M16.0303 10.0303C16.3232 9.73744 16.3232 9.26256 16.0303 8.96967C15.7374 8.67678 15.2626 8.67678 14.9697 8.96967L10.5 13.4393L9.03033 11.9697C8.73744 11.6768 8.26256 11.6768 7.96967 11.9697C7.67678 12.2626 7.67678 12.7374 7.96967 13.0303L9.96967 15.0303C10.2626 15.3232 10.7374 15.3232 11.0303 15.0303L16.0303 10.0303Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75C17.1086 2.75 21.25 6.89137 21.25 12C21.25 17.1086 17.1086 21.25 12 21.25C6.89137 21.25 2.75 17.1086 2.75 12Z" fill="currentColor"/>
+</svg>
+                                <svg class="size-4" x-show="toast.type === 'info' || toast.type === 'default'" viewBox="0 0 24 24" fill="none"
+    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M12 17.75C12.4142 17.75 12.75 17.4142 12.75 17V11C12.75 10.5858 12.4142 10.25 12 10.25C11.5858 10.25 11.25 10.5858 11.25 11V17C11.25 17.4142 11.5858 17.75 12 17.75Z" fill="currentColor"/><path d="M12 7C12.5523 7 13 7.44772 13 8C13 8.55228 12.5523 9 12 9C11.4477 9 11 8.55228 11 8C11 7.44772 11.4477 7 12 7Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M1.25 12C1.25 6.06294 6.06294 1.25 12 1.25C17.9371 1.25 22.75 6.06294 22.75 12C22.75 17.9371 17.9371 22.75 12 22.75C6.06294 22.75 1.25 17.9371 1.25 12ZM12 2.75C6.89137 2.75 2.75 6.89137 2.75 12C2.75 17.1086 6.89137 21.25 12 21.25C17.1086 21.25 21.25 17.1086 21.25 12C21.25 6.89137 17.1086 2.75 12 2.75Z" fill="currentColor"/>
+</svg>
+                                <svg class="size-4" x-show="toast.type === 'warning'" viewBox="0 0 24 24" fill="none"
+    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M12 7.25C12.4142 7.25 12.75 7.58579 12.75 8V13C12.75 13.4142 12.4142 13.75 12 13.75C11.5858 13.75 11.25 13.4142 11.25 13V8C11.25 7.58579 11.5858 7.25 12 7.25Z" fill="currentColor"/><path d="M12 17C12.5523 17 13 16.5523 13 16C13 15.4477 12.5523 15 12 15C11.4477 15 11 15.4477 11 16C11 16.5523 11.4477 17 12 17Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.2944 4.47643C9.36631 3.11493 10.5018 2.25 12 2.25C13.4981 2.25 14.6336 3.11493 15.7056 4.47643C16.7598 5.81544 17.8769 7.79622 19.3063 10.3305L19.7418 11.1027C20.9234 13.1976 21.8566 14.8523 22.3468 16.1804C22.8478 17.5376 22.9668 18.7699 22.209 19.8569C21.4736 20.9118 20.2466 21.3434 18.6991 21.5471C17.1576 21.75 15.0845 21.75 12.4248 21.75H11.5752C8.91552 21.75 6.84239 21.75 5.30082 21.5471C3.75331 21.3434 2.52637 20.9118 1.79099 19.8569C1.03318 18.7699 1.15218 17.5376 1.65314 16.1804C2.14334 14.8523 3.07658 13.1977 4.25818 11.1027L4.69361 10.3307C6.123 7.79629 7.24019 5.81547 8.2944 4.47643ZM9.47297 5.40432C8.49896 6.64148 7.43704 8.51988 5.96495 11.1299L5.60129 11.7747C4.37507 13.9488 3.50368 15.4986 3.06034 16.6998C2.6227 17.8855 2.68338 18.5141 3.02148 18.9991C3.38202 19.5163 4.05873 19.8706 5.49659 20.0599C6.92858 20.2484 8.9026 20.25 11.6363 20.25H12.3636C15.0974 20.25 17.0714 20.2484 18.5034 20.0599C19.9412 19.8706 20.6179 19.5163 20.9785 18.9991C21.3166 18.5141 21.3773 17.8855 20.9396 16.6998C20.4963 15.4986 19.6249 13.9488 18.3987 11.7747L18.035 11.1299C16.5629 8.51987 15.501 6.64148 14.527 5.40431C13.562 4.17865 12.8126 3.75 12 3.75C11.1874 3.75 10.4379 4.17865 9.47297 5.40432Z" fill="currentColor"/>
+</svg>
+                                <svg class="size-4" x-show="toast.type === 'danger'" viewBox="0 0 24 24" fill="none"
+    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M12 6.25C12.4142 6.25 12.75 6.58579 12.75 7V13C12.75 13.4142 12.4142 13.75 12 13.75C11.5858 13.75 11.25 13.4142 11.25 13V7C11.25 6.58579 11.5858 6.25 12 6.25Z" fill="currentColor"/><path d="M12 17C12.5523 17 13 16.5523 13 16C13 15.4477 12.5523 15 12 15C11.4477 15 11 15.4477 11 16C11 16.5523 11.4477 17 12 17Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M1.25 12C1.25 6.06294 6.06294 1.25 12 1.25C17.9371 1.25 22.75 6.06294 22.75 12C22.75 17.9371 17.9371 22.75 12 22.75C6.06294 22.75 1.25 17.9371 1.25 12ZM12 2.75C6.89137 2.75 2.75 6.89137 2.75 12C2.75 17.1086 6.89137 21.25 12 21.25C17.1086 21.25 21.25 17.1086 21.25 12C21.25 6.89137 17.1086 2.75 12 2.75Z" fill="currentColor"/>
+</svg>
+                            </div>
+
+                            <div class="min-w-0 flex-1 pt-0.5">
+                                <p class="text-sm font-semibold leading-5 text-neutral-950 dark:text-fg"
+                                    x-text="toast.message"></p>
+                                <div x-show="toast.description"
+                                    class="mt-0.5 w-full whitespace-pre-wrap break-words text-xs leading-5 text-neutral-600 dark:text-fg-dim"
+                                    x-html="window.sanitizeHTML(toast.description)"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="toast.html">
+                        <div class="w-full" x-html="window.sanitizeHTML(toast.html)"></div>
+                    </template>
+
+                    <button type="button" x-show="toast.description && !toast.html"
+                        @click="copyToast(toast)" :title="toast.copied ? 'Copied' : 'Copy details'"
+                        class="absolute right-10 top-2.5 flex size-7 items-center justify-center rounded-md text-neutral-400 opacity-0 transition-colors hover:bg-black/5 hover:text-neutral-700 group-hover:opacity-100 dark:text-fg-faint dark:hover:bg-white/[0.06] dark:hover:text-fg"
+                        :class="{ 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400': toast.copied }">
+                        <svg x-show="!toast.copied" class="size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8.25 7.5V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0120.25 6v7.5A2.25 2.25 0 0118 15.75h-1.5m-8.25-8.25H6A2.25 2.25 0 003.75 9.75v7.5A2.25 2.25 0 006 19.5h7.5a2.25 2.25 0 002.25-2.25V15m-7.5-7.5h5.25A2.25 2.25 0 0115.75 9.75V15" />
+                        </svg>
+                        <svg class="size-4 size-3.5" x-show="toast.copied" viewBox="0 0 24 24" fill="none"
+    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M21.5303 5.46967C21.8232 5.76256 21.8232 6.23744 21.5303 6.53033L9.53033 18.5303C9.23744 18.8232 8.76256 18.8232 8.46967 18.5303L2.46967 12.5303C2.17678 12.2374 2.17678 11.7626 2.46967 11.4697C2.76256 11.1768 3.23744 11.1768 3.53033 11.4697L9 16.9393L20.4697 5.46967C20.7626 5.17678 21.2374 5.17678 21.5303 5.46967Z" fill="currentColor"/>
+</svg>
+                    </button>
+
+                    <button type="button" @click="removeToast(toast.id)" aria-label="Dismiss"
+                        class="absolute right-2.5 top-2.5 flex size-7 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-black/5 hover:text-neutral-700 dark:text-fg-faint dark:hover:bg-white/[0.06] dark:hover:text-fg">
+                        <svg class="size-4 size-3.5" viewBox="0 0 24 24" fill="none"
+    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M18.4697 19.5303C18.7626 19.8232 19.2374 19.8232 19.5303 19.5303C19.8232 19.2374 19.8232 18.7626 19.5303 18.4697L13.0607 12L19.5303 5.53033C19.8232 5.23744 19.8232 4.76256 19.5303 4.46967C19.2374 4.17678 18.7626 4.17678 18.4697 4.46967L12 10.9393L5.53033 4.46967C5.23744 4.17678 4.76256 4.17678 4.46967 4.46967C4.17678 4.76256 4.17678 5.23744 4.46967 5.53033L10.9393 12L4.46967 18.4697C4.17678 18.7626 4.17678 19.2374 4.46967 19.5303C4.76256 19.8232 5.23744 19.8232 5.53033 19.5303L12 13.0607L18.4697 19.5303Z" fill="currentColor"/>
+</svg>
+                    </button>
+                </li>
+            </template>
+        </ul>
+    </template>
+</div>
+        <main class="error-shell">
+    <div class="error-shell-content">
+        <p class="error-code">404</p>
+
+        <h1 class="error-title">How did you get here?</h1>
+
+                    <p class="error-description">Sorry, we couldn&#039;t find the page you&#039;re looking for.</p>
+        
+        
+        <div class="error-actions">
+            
+                            <a href="https://coolify.cajuru.cloud/security/api-tokens">
+                    <button          class="button" type="button"
+        >
+
+        Go back
+</button>
+                </a>
+            
+                            <a href="https://coolify.cajuru.cloud" wire:navigate>
+                    <button          class="button" type="button"
+        >
+
+        Dashboard
+</button>
+                </a>
+            
+                            <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="https://coolify.io/docs/contact">
+                    <button          class="button" type="button"
+        >
+
+        Contact support
+                        <svg class="inline-flex size-3 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+</svg>
+</button>
+                </a>
+                    </div>
+    </div>
+</main>
+    </body>
+
+</html>

@@ -1,0 +1,10 @@
+HTTP/1.1 404 Not Found
+Alt-Svc: h3=":443"; ma=2592000
+Cache-Control: no-cache, private
+Content-Type: application/json
+Date: Wed, 28 Oct 2026 17:16:06 GMT
+Server: nginx
+Set-Cookie: XSRF-TOKEN=eyJpdiI6InJ3UHp4c21hZW00V2xKekVNM0IrcXc9PSIsInZhbHVlIjoieDhtWnp0cGJ5ckhqaTVoZW95QVJwQWY1V0haeTB3ZGNCUFpyN1l4ZGxYQi9yV3phZEFSNXFDOU8zMlhXaFU2ek1FSTErVGlaRTk4T2ZVS1V5cXBqVFl4dlJ4N1FUWTZqZWJVSVNTVzRqSmtCL0xKelpGTGpMY3NaMDRyUVZaWGYiLCJtYWMiOiI0NDFmNTgyOWU3YjgzMDc5OTdjZDZiOTJmOGUxOWYwMzQ2NzU3ZGZhZDI5ZjBjNjNmNGQ1Mjc2MTFlYzQxYWI1IiwidGFnIjoiIn0%3D; expires=Wed, 04 Nov 2026 17:16:06 GMT; Max-Age=604800; path=/; secure; samesite=lax
+Set-Cookie: coolify_session=eyJpdiI6IkpzdVBmQSt2TVMzTm9WY3dyT0lFT2c9PSIsInZhbHVlIjoiV2t5Z1NSQ1ExWStsS0NlS3Nvalo5TTBsLy9IYm9XTDc4cE5oWC8xZnhSNmtaaUxFQzgxRVRuaWNyNFVhU1NJZWlMTHg4VS8xbVhzWVNIczBVeGNYYyt4dnp3NjEwOUQzQ2xZRTYyUTUvUzhBOGl0L2U4bi9ZZFR0NnVXanNwVk8iLCJtYWMiOiI3NWM4OGRmZGQ1NzUxMDdhZDZkNzY3ZGIzYjg5NjUxYjlkZDI4YWVlOWIxM2FjOGI0YWMyZjkxMjJhNWNkNzc4IiwidGFnIjoiIn0%3D; expires=Wed, 04 Nov 2026 17:16:06 GMT; Max-Age=604800; path=/; secure; httponly; samesite=lax
+Transfer-Encoding: chunked
+

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha de Lances - {{ certame.numero_pregao }} - {{ certame.orgao }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @media print {
+      body {
+        background-color: white !important;
+        color: black !important;
+        font-size: 11pt;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-shadow-none {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 p-4 sm:p-8 min-h-screen">
+  
+  <!-- Action Bar (hidden on print) -->
+  <div class="max-w-5xl mx-auto mb-6 flex items-center justify-between no-print bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+    <a href="/" class="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium text-sm transition">
+      <i class="fa-solid fa-arrow-left"></i>
+      Voltar para o Painel
+    </a>
+    <div class="flex items-center gap-3">
+      <button onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow transition">
+        <i class="fa-solid fa-print"></i>
+        Imprimir / Salvar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Document Container -->
+  <div class="max-w-5xl mx-auto bg-white p-8 sm:p-10 rounded-2xl shadow-md border border-slate-200 print-shadow-none">
+    
+    <!-- Header -->
+    <div class="border-b-2 border-slate-800 pb-6 mb-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+            {{ certame.modalidade }}
+          </span>
+          <h1 class="text-2xl font-black text-slate-900 mt-2">{{ certame.orgao }}</h1>
+          <h2 class="text-lg font-bold text-slate-700">{{ certame.numero_pregao }}</h2>
+          <p class="text-sm text-slate-600 mt-1"><strong class="text-slate-800">Objeto:</strong> {{ certame.titulo }}</p>
+        </div>
+        <div class="text-right text-xs text-slate-500">
+          <p class="font-semibold text-slate-700">Relatório de Cálculo & Custos</p>
+          <p>Emitido em: <span id="currentDate"></span></p>
+          <p class="mt-1">Status: <strong class="text-slate-800">{{ certame.status }}</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+        <span class="text-xs font-semibold uppercase text-slate-500">Faturamento Bruto</span>
+        <p class="text-xl font-bold text-slate-900 mt-1">R$ {{ "{:,.2f}".format(certame.totais.total_faturamento).replace(",", "X").replace(".", ",").replace("X", ".") }}</p>
+        <span class="text-xs text-slate-400">Total Vendido / Proposta</span>
+      </div>
+
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+        <span class="text-xs font-semibold uppercase text-slate-500">Custos Totais</span>
+        <p class="text-xl font-bold text-slate-900 mt-1">R$ {{ "{:,.2f}".format(certame.totais.total_custos).replace(",", "X").replace(".", ",").replace("X", ".") }}</p>
+        <span class="text-xs text-slate-400">Produtos + Frete</span>
+      </div>
+
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+        <span class="text-xs font-semibold uppercase text-slate-500">Impostos Totais</span>
+        <p class="text-xl font-bold text-amber-700 mt-1">R$ {{ "{:,.2f}".format(certame.totais.total_impostos).replace(",", "X").replace(".", ",").replace("X", ".") }}</p>
+        <span class="text-xs text-slate-400">Alíquota Média</span>
+      </div>
+
+      <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+        <span class="text-xs font-semibold uppercase text-emerald-800">Lucro Líquido Real</span>
+        <p class="text-xl font-bold text-emerald-700 mt-1">R$ {{ "{:,.2f}".format(certame.totais.total_lucro_liquido).replace(",", "X").replace(".", ",").replace("X", ".") }}</p>
+        <span class="text-xs font-bold text-emerald-800">Margem: {{ certame.totais.margem_liquida_media }}%</span>
+      </div>
+    </div>
+
+    <!-- Recebimento Líquido Highlight -->
+    <div class="mb-8 p-4 bg-teal-50/60 border border-teal-200 rounded-xl flex items-center justify-between">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-teal-800">Valor Líquido a Receber</span>
+        <p class="text-xs text-slate-600">Total a ser creditado pelo órgão público após deduções e impostos retidos</p>
+      </div>
+      <div class="text-right">
+        <span class="text-2xl font-black text-teal-800">
+          R$ {{ "{:,.2f}".format(certame.totais.total_liquido_receber).replace(",", "X").replace(".", ",").replace("X", ".") }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="mb-8">
+      <h3 class="text-base font-bold text-slate-900 mb-3 flex items-center justify-between">
+        <span>Composição de Itens do Pregão ({{ certame.itens|length }})</span>
+        <span class="text-xs font-normal text-slate-500">* Lance Mínimo = Preço de venda mínimo para margem zero (Custo ÷ (1 - Imposto))</span>
+      </h3>
+      <div class="overflow-x-auto border border-slate-200 rounded-xl">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
+            <tr>
+              <th class="py-2.5 px-3">Item</th>
+              <th class="py-2.5 px-3">Descrição do Item</th>
+              <th class="py-2.5 px-3 text-center">Und/Qtd</th>
+              <th class="py-2.5 px-3 text-right">Custo Un.</th>
+              <th class="py-2.5 px-3 text-center">% Imp.</th>
+              <th class="py-2.5 px-3 text-right bg-amber-50/70 border-x border-amber-200 font-bold text-amber-900">Lance Mínimo</th>
+              <th class="py-2.5 px-3 text-right font-bold">Lance Venda</th>
+              <th class="py-2.5 px-3 text-right">Fat. Bruto</th>
+              <th class="py-2.5 px-3 text-right text-emerald-800 font-bold">Lucro Líq.</th>
+              <th class="py-2.5 px-3 text-center">Margem</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            {% for item in certame.itens %}
+            <tr class="hover:bg-slate-50">
+              <td class="py-2 px-3 font-bold text-slate-900">
+                #{{ item.numero_item }}
+                {% if item.lote %}<span class="text-[10px] block text-slate-400">Lote {{ item.lote }}</span>{% endif %}
+              </td>
+              <td class="py-2 px-3">
+                <span class="font-medium text-slate-900">{{ item.descricao }}</span>
+                {% if item.observacao %}
+                <span class="block text-[10px] text-slate-500 italic">{{ item.observacao }}</span>
+                {% endif %}
+              </td>
+              <td class="py-2 px-3 text-center text-slate-700 whitespace-nowrap">
+                {{ item.quantidade }} {{ item.unidade }}
+              </td>
+              <td class="py-2 px-3 text-right whitespace-nowrap">
+                R$ {{ "{:,.2f}".format(item.custo_unitario_total).replace(",", "X").replace(".", ",").replace("X", ".") }}
+              </td>
+              <td class="py-2 px-3 text-center whitespace-nowrap">
+                {{ item.aliquota_imposto }}%
+              </td>
+              <td class="py-2 px-3 text-right font-bold text-amber-900 bg-amber-50/40 border-x border-amber-200 whitespace-nowrap">
+                R$ {{ "{:,.2f}".format(item.lance_minimo_unitario).replace(",", "X").replace(".", ",").replace("X", ".") }}
+              </td>
+              <td class="py-2 px-3 text-right font-bold text-slate-900 whitespace-nowrap">
+                R$ {{ "{:,.2f}".format(item.valor_venda_unitario).replace(",", "X").replace(".", ",").replace("X", ".") }}
+              </td>
+              <td class="py-2 px-3 text-right whitespace-nowrap">
+                R$ {{ "{:,.2f}".format(item.faturamento_bruto).replace(",", "X").replace(".", ",").replace("X", ".") }}
+              </td>
+              <td class="py-2 px-3 text-right font-bold text-emerald-700 whitespace-nowrap">
+                R$ {{ "{:,.2f}".format(item.lucro_liquido).replace(",", "X").replace(".", ",").replace("X", ".") }}
+              </td>
+              <td class="py-2 px-3 text-center font-bold {{ 'text-emerald-700' if item.margem_liquida >= 10 else ('text-amber-700' if item.margem_liquida > 0 else 'text-rose-700') }} whitespace-nowrap">
+                {{ item.margem_liquida }}%
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-300">
+            <tr>
+              <td colspan="7" class="py-2.5 px-3 text-right uppercase text-slate-700">TOTAIS:</td>
+              <td class="py-2.5 px-3 text-right text-slate-900 whitespace-nowrap">
+                R$ {{ "{:,.2f}".format(certame.totais.total_faturamento).replace(",", "X").replace(".", ",").replace("X", ".") }}
+              </td>
+              <td class="py-2.5 px-3 text-right text-emerald-800 whitespace-nowrap">
+                R$ {{ "{:,.2f}".format(certame.totais.total_lucro_liquido).replace(",", "X").replace(".", ",").replace("X", ".") }}
+              </td>
+              <td class="py-2.5 px-3 text-center text-emerald-800 whitespace-nowrap">
+                {{ certame.totais.margem_liquida_media }}%
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Observações do Edital -->
+    {% if certame.observacoes %}
+    <div class="mb-8 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+      <h4 class="text-xs font-bold uppercase text-slate-600 mb-1">Observações do Edital / Anotações</h4>
+      <p class="text-xs text-slate-700 whitespace-pre-line">{{ certame.observacoes }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Footer / Signature -->
+    <div class="pt-8 border-t border-slate-200 flex justify-between items-end text-xs text-slate-400">
+      <div>
+        <p>Calculadora de Licitações &middot; {{ user.email }}</p>
+      </div>
+      <div class="text-center w-64 border-t border-slate-400 pt-2 text-slate-600">
+        Assinatura do Responsável
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  </script>
+</body>
+</html>
